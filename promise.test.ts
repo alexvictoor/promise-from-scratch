@@ -7,7 +7,7 @@ class Promesse {
     });
   }
 
-  then = (onFulfilled: (value: any) => any) => onFulfilled(this.result);
+  then = (onFulfilled: (value: any) => any): Promesse => onFulfilled(this.result);
 }
 
 describe("Promise from scratch", () => {
