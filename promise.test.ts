@@ -4,38 +4,49 @@ class Promesse {
   private completed: boolean = false;
   private rejected: boolean = false;
   private deferreds: any[] = [];
-  
+  private deferredRejects: any[] = [];
+
   constructor(initTask: (resolve: any, reject?: any) => any) {
-    initTask((result) => {
-      if (result?.then) {
-        result.then((value) => {
+    initTask(
+      (result) => {
+        if (result?.then) {
+          result.then((value) => {
+            this.completed = true;
+            this.result = value;
+            this.deferreds.forEach((fn) => fn(value));
+          });
+        } else {
           this.completed = true;
-          this.result = value;
-          this.deferreds.forEach(fn => fn(value));
-        });
-      } else {
-        this.completed = true;
-        this.result = result;
-        this.deferreds.forEach(fn => fn(result));
+          this.result = result;
+          this.deferreds.forEach((fn) => fn(result));
+        }
+      },
+      (error) => {
+        this.rejected = true;
+        this.reason = error;
+        this.deferredRejects.forEach((fn) => fn(error));
       }
-      
-    }, (error) => {
-      this.rejected = true;
-      this.reason = error;
-    });
+    );
   }
 
-  then = (onFulfilled: (value: any) => any, onRejected?: (reason: any) => any): Promesse => {
+  then = (
+    onFulfilled: (value: any) => any,
+    onRejected?: (reason: any) => any
+  ): Promesse => {
     if (this.rejected) {
       onRejected && onRejected(this.reason);
-      return new Promesse((resolve) => { resolve() });
+      return new Promesse((resolve) => {
+        resolve();
+      });
     }
     if (this.completed) {
       return new Promesse((resolve) => resolve(onFulfilled(this.result)));
     }
-    return new Promesse((resolve) => this.deferreds.push(result => resolve(onFulfilled(result))));
-  }
-    
+    return new Promesse((resolve, _reject) => {
+      this.deferreds.push((result) => resolve(onFulfilled(result)));
+      this.deferredRejects.push((result) => onRejected ? resolve(onRejected(result)) : resolve(result));
+    });
+  };
 }
 
 describe("Promise from scratch", () => {
@@ -95,20 +106,20 @@ describe("Promise from scratch", () => {
 
   it("should raise an error when rejected", async () => {
     // given
-    const errorPromise = new Promesse((_resolve,reject) => {
-      reject('some error');
+    const errorPromise = new Promesse((_resolve, reject) => {
+      reject("some error");
     });
     // when
     //then
-    await expect(errorPromise).rejects.toEqual('some error');
+    await expect(errorPromise).rejects.toEqual("some error");
   });
   it("should raise an error when rejected after a delay", async () => {
     // given
-    const errorPromise = new Promesse((_resolve,reject) => {
-      setTimeout(() => reject('some error'), 100);
+    const errorPromise = new Promesse((_resolve, reject) => {
+      setTimeout(() => reject("some error"), 0);
     });
     // when
     //then
-    await expect(errorPromise).rejects.toEqual('some error');
+    await expect(errorPromise).rejects.toEqual("some error");
   });
 });
