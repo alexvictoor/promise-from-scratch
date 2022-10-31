@@ -20,7 +20,7 @@ class Promesse {
     });
   }
 
-  then = (onFulfilled: (value: any) => any): Promesse => {
+  then = (onFulfilled: (value: any) => any, onRejected?: (reason: any) => any): Promesse => {
     if (this.completed) {
       return new Promesse((resolve) => resolve(onFulfilled(this.result)));
     }
@@ -82,5 +82,15 @@ describe("Promise from scratch", () => {
       .then((value) => value * 2);
     // then
     expect(result).toEqual(168);
+  });
+
+  it("should raise an error when rejected", async () => {
+    // given
+    const errorPromise = new Promesse((_resolve,reject) => {
+      reject('some error');
+    });
+    // when
+    //then
+    await expect(errorPromise).rejects.toEqual('some error');
   });
 });
