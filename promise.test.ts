@@ -102,4 +102,13 @@ describe("Promise from scratch", () => {
     //then
     await expect(errorPromise).rejects.toEqual('some error');
   });
+  it("should raise an error when rejected after a delay", async () => {
+    // given
+    const errorPromise = new Promesse((_resolve,reject) => {
+      setTimeout(() => reject('some error'), 100);
+    });
+    // when
+    //then
+    await expect(errorPromise).rejects.toEqual('some error');
+  });
 });
