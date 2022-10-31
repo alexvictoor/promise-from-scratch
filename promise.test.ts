@@ -1,20 +1,32 @@
 class Promesse {
   private result: any;
-
+  private completed: boolean = false;
+  private deferreds: any[] = [];
+  
   constructor(initTask: (resolve: any, reject?: any) => any) {
     initTask((result) => {
       if (result?.then) {
         result.then((value) => {
+          this.completed = true;
           this.result = value;
+          this.deferreds.forEach(fn => fn(value));
         });
       } else {
+        this.completed = true;
         this.result = result;
+        this.deferreds.forEach(fn => fn(result));
       }
+      
     });
   }
 
-  then = (onFulfilled: (value: any) => any): Promesse =>
-    new Promesse((resolve) => resolve(onFulfilled(this.result)));
+  then = (onFulfilled: (value: any) => any): Promesse => {
+    if (this.completed) {
+      return new Promesse((resolve) => resolve(onFulfilled(this.result)));
+    }
+    return new Promesse((resolve) => this.deferreds.push(result => resolve(onFulfilled(result))));
+  }
+    
 }
 
 describe("Promise from scratch", () => {
