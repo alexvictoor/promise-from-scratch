@@ -1,6 +1,8 @@
 class Promesse {
   private result: any;
+  private reason: any;
   private completed: boolean = false;
+  private rejected: boolean = false;
   private deferreds: any[] = [];
   
   constructor(initTask: (resolve: any, reject?: any) => any) {
@@ -17,10 +19,17 @@ class Promesse {
         this.deferreds.forEach(fn => fn(result));
       }
       
+    }, (error) => {
+      this.rejected = true;
+      this.reason = error;
     });
   }
 
   then = (onFulfilled: (value: any) => any, onRejected?: (reason: any) => any): Promesse => {
+    if (this.rejected) {
+      onRejected && onRejected(this.reason);
+      return new Promesse((resolve) => { resolve() });
+    }
     if (this.completed) {
       return new Promesse((resolve) => resolve(onFulfilled(this.result)));
     }
